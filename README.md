@@ -1,8 +1,29 @@
 # Sidekiq::Bouncer
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/sidekiq/bouncer`. To experiment with that code, run `bin/console` for an interactive prompt.
+This gem debounces Sidekiq jobs that have the same worker class and params.
 
-TODO: Delete this and the text above, and describe your gem
+It lets duplicate jobs enqueue. Each time, it refreshes a timestamp in Redis.
+When duplicate jobs run, they are checked against this timestamp in Redis and
+only the last job will execute.
+
+## Alternatives Considered
+
+This is a home grown solution. We looked at the official V6 recommendation and
+top gems from Googling 'sidekiq debounce', but all were too slow or broken.
+
+  1) https://github.com/mperham/sidekiq/wiki/API
+
+     The official recommendation is to find and delete duplicate jobs before
+     enqueuing a new job. V6 introduced `scan` for this purpose, and it is
+     1.5x faster than V5's `select` method, but still too slow at high volume.
+
+  2) https://github.com/hummingbird-me/sidekiq-debounce
+
+     The 1st search result. It is outdated and does not work anymore.
+
+  3) https://github.com/paladinsoftware/sidekiq-debouncer
+
+     The 2nd search result. Still works, but it uses the slow `select` method.
 
 ## Installation
 
@@ -22,7 +43,25 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+class FooWorker
+  include Sidekiq::Worker
+
+  def self.bouncer
+    # The default delay is 60 seconds. You can optionally override it.
+    @bouncer ||= Sidekiq::Bouncer.new(self, optional_delay_override)
+  end
+
+  def perform(param1, param2)
+    return unless self.class.bouncer.let_in?(param1, param2)
+
+    # Do your thing.
+  end
+end
+
+# Call `.bouncer.debounce(...)` in place of `.perform_in/perform_async(...)`.
+FooWorker.bouncer.debounce(param1, param2)
+```
 
 ## Development
 
