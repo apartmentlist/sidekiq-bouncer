@@ -25,6 +25,14 @@ top gems from Googling 'sidekiq debounce', but all were too slow or broken.
 
      The 2nd search result. Still works, but it uses the slow `select` method.
 
+## Performance
+
+For each duplicate job, this approach takes 10ms flat; in comparison, `scan`
+takes 10ms per each thousand job in the scheduled set, which adds up quickly.
+The before (using `scan`) and after (using this gem):
+
+![Screen Shot 2020-06-16 at 5 50 46 PM](https://user-images.githubusercontent.com/680345/85186918-a2ff7580-b250-11ea-8b85-625efb722853.png)
+
 ## Installation
 
 Add this line to your application's Gemfile:
