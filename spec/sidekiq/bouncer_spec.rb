@@ -1,31 +1,39 @@
-module Rails; end
+module RedisMock
+end
 
-class FooWorker
+class WorkerMock
   def self.bouncer
     @bouncer ||= Sidekiq::Bouncer.new(self)
   end
 end
 
 RSpec.describe Sidekiq::Bouncer do
-  let(:klass) { FooWorker }
+  let(:redis) { RedisMock }
+  let(:klass) { WorkerMock }
   let(:param1) { 1 }
   let(:param2) { 2 }
   let(:key) { "#{klass}:#{param1},#{param2}" }
   let(:now) { 100 }
 
-  subject { FooWorker.bouncer }
+  subject { WorkerMock.bouncer }
+
+  before do
+    described_class.configure do |config|
+      config.redis = RedisMock
+    end
+  end
 
   describe '#debounce' do
     before do
       allow(subject).to receive(:now).and_return(now)
-      allow(Rails).to receive_message_chain(:application, :redis, :set)
+      allow(redis).to receive(:set)
       allow(klass).to receive(:perform_at)
     end
 
     it 'sets Redis with delayed timestamp' do
       subject.debounce(param1, param2)
 
-      expect(Rails.application.redis)
+      expect(subject.class.config.redis)
         .to have_received(:set)
         .with(key, now + described_class::DEFAULT_DELAY)
     end
@@ -46,10 +54,8 @@ RSpec.describe Sidekiq::Bouncer do
   describe '#let_in?' do
     context 'when debounce timestamp is in the past' do
       before do
-        allow(Rails)
-          .to receive_message_chain(:application, :redis, :get)
-          .and_return(Time.now - 10)
-        allow(Rails).to receive_message_chain(:application, :redis, :del)
+        allow(redis).to receive(:get).and_return(Time.now - 10)
+        allow(redis).to receive(:del)
       end
 
       it 'returns true' do
@@ -58,15 +64,13 @@ RSpec.describe Sidekiq::Bouncer do
 
       it 'deletes debounce timestamp from redis' do
         subject.let_in?(param1, param2)
-        expect(Rails.application.redis).to have_received(:del).with(key)
+        expect(subject.class.config.redis).to have_received(:del).with(key)
       end
     end
 
     context 'when debounce timestamp is in the future' do
       before do
-        allow(Rails)
-          .to receive_message_chain(:application, :redis, :get)
-          .and_return(Time.now + 10)
+        allow(redis).to receive(:get).and_return(Time.now + 10)
       end
 
       it 'returns false' do
@@ -76,9 +80,7 @@ RSpec.describe Sidekiq::Bouncer do
 
     context 'when debounce timestamp is not there' do
       before do
-        allow(Rails)
-          .to receive_message_chain(:application, :redis, :get)
-          .and_return(nil)
+        allow(redis).to receive(:get).and_return(nil)
       end
 
       it 'returns false' do

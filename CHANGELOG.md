@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 0.1.1
+
+_2020-06-29_
+
+* Make `redis` configurable instead of hardcoded to `Rails.application.redis`.
+
 ## Version 0.1.0
 
 _2020-06-19_
