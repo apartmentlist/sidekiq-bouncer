@@ -4,7 +4,7 @@
 
 _2020-06-29_
 
-* Make `redis` configurable instead of hardcoded to `Rails.application.redis`.
+* [18a8aa9](https://github.com/apartmentlist/sidekiq-bouncer/commit/18a8aa9) - Make `redis` configurable instead of hardcoded to `Rails.application.redis`.
 
 ## Version 0.1.0
 
