@@ -77,9 +77,9 @@ end
 FooWorker.bouncer.debounce(param1, param2)
 ```
 
-# About ApartmentList
+# About Apartment List
 
-The majority of Americans spend two thirds of their time at home, yet they find searching for their home to be a huge hassle. Our engineering team is dedicated to solving this problem for millions of renters by disrupting the rental process. Each team is impactful and high-leverage, making the entire engineering organization more productive. Our backend is powered by Ruby, PostgreSQL, Elasticsearch, Kinesis, Go and AMQP, and we are excited to hire the best and brightest engineering talent to join us with new ideas, innovative approaches, and fresh perspectives.
+The majority of Americans spend two thirds of their time at home, yet they find searching for their home to be a huge hassle. Our engineering team is dedicated to solving this problem for millions of renters by disrupting the rental process. Each team is impactful and high-leverage, making the entire engineering organization more productive. Our backend is powered by Ruby, PostgreSQL, Elasticsearch, Kinesis, Go and AMQP, and we are excited to hire the best and brightest engineering talent to join us with new ideas, innovative approaches, and fresh perspectives. Check out our career page for open roles - https://www.apartmentlist.com/about/careers
 
 ## Development
 
