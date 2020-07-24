@@ -1,6 +1,6 @@
 # Sidekiq::Bouncer
 
-This gem debounces Sidekiq jobs that have the same worker class and params.
+This Ruby gem debounces Sidekiq jobs that have the same worker class and params.
 
 It lets duplicate jobs enqueue. Each time, it refreshes a timestamp in Redis.
 When duplicate jobs run, they are checked against this timestamp in Redis and
@@ -76,6 +76,10 @@ end
 # Call `.bouncer.debounce(...)` in place of `.perform_in/perform_async(...)`.
 FooWorker.bouncer.debounce(param1, param2)
 ```
+
+# About ApartmentList
+
+The majority of Americans spend two thirds of their time at home, yet they find searching for their home to be a huge hassle. Our engineering team is dedicated to solving this problem for millions of renters by disrupting the rental process. Each team is impactful and high-leverage, making the entire engineering organization more productive. Our backend is powered by Ruby, PostgreSQL, Elasticsearch, Kinesis, Go and AMQP, and we are excited to hire the best and brightest engineering talent to join us with new ideas, innovative approaches, and fresh perspectives.
 
 ## Development
 
