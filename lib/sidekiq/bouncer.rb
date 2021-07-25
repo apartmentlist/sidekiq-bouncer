@@ -3,7 +3,8 @@ require 'sidekiq/bouncer/version'
 
 module Sidekiq
   class Bouncer
-    BUFFER = 1 # Second.
+    BUFFER = 0.01 # Second.
+    SKIP_BUFFER = 2 # Second.
     DEFAULT_DELAY = 60 # Seconds.
 
     class << self
@@ -21,8 +22,30 @@ module Sidekiq
       @delay = delay
     end
 
+    def first_run?(*params)
+      self.class.config.redis.get(first_run_key(params)).blank?
+    end
+
+    def first_run_or_debounce(*params)
+      if first_run?(*params)
+        self.class.config.redis.set(first_run_key(params), 1)
+        @klass.perform_async(*params)
+        return
+      end
+
+      debounce(*params)
+    end
+
+    def skip_job?(*params)
+      timestamp = self.class.config.redis.get(key(params))
+      timestamp.present? && timestamp.to_f + SKIP_BUFFER > now + @delay
+    end
+
     def debounce(*params)
-      # Refresh the timestamp in redis with debounce delay added.
+      if skip_job?(*params)
+        return
+      end
+
       self.class.config.redis.set(key(params), now + @delay)
 
       # Schedule the job with not only debounce delay added, but also BUFFER.
@@ -33,13 +56,17 @@ module Sidekiq
     def let_in?(*params)
       # Only the last job should come after the timestamp.
       timestamp = self.class.config.redis.get(key(params))
-      return false if Time.now.to_i < timestamp.to_i
+      first_run = self.class.config.redis.get(first_run_key(params))
 
-      # But because of BUFFER, there could be mulitple last jobs enqueued within
-      # the span of BUFFER. The first one will clear the timestamp, and the rest
-      # will skip when they see that the timestamp is gone.
-      return false if timestamp.nil?
+      # Support first run
+      if timestamp.nil? && first_run.present?
+        return true
+      end
+
+      return false if Time.now.to_f < timestamp.to_f
+
       self.class.config.redis.del(key(params))
+      self.class.config.redis.del(first_run_key(params))
 
       true
     end
@@ -50,8 +77,12 @@ module Sidekiq
       "#{@klass}:#{params.join(',')}"
     end
 
+    def first_run_key(params)
+      "fr:#{@klass}:#{params.join(',')}"
+    end
+
     def now
-      Time.now.to_i
+      Time.now.to_f
     end
   end
 end
